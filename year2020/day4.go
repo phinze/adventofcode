@@ -3,7 +3,6 @@ package year2020
 import (
 	"bufio"
 	"fmt"
-	"log"
 	"reflect"
 	"regexp"
 	"strconv"
@@ -14,15 +13,57 @@ import (
 
 type Height string
 
+var heightRegexp = regexp.MustCompile("^([0-9]+)(in|cm)$")
+
+func (h Height) Validate() error {
+	err := validation.Validate(string(h),
+		validation.Required,
+		validation.Match(heightRegexp))
+	if err != nil {
+		return err
+	}
+
+	matches := heightRegexp.FindStringSubmatch(string(h))
+	num, err := strconv.Atoi(matches[1])
+	if err != nil {
+		return err
+	}
+	var min, max int
+	switch matches[2] {
+	case "in":
+		min = 59
+		max = 76
+	case "cm":
+		min = 150
+		max = 193
+	default:
+		return fmt.Errorf("unexpected height unit: %s", matches[2])
+	}
+	return validation.Validate(num,
+		validation.Min(min),
+		validation.Max(max),
+	)
+}
+
 type Passport struct {
 	BirthYear      int    `passport:"byr"`
 	IssueYear      int    `passport:"iyr"`
 	ExpirationYear int    `passport:"eyr"`
-	Height         string `passport:"hgt"`
+	Height         Height `passport:"hgt"`
 	HairColor      string `passport:"hcl"`
 	EyeColor       string `passport:"ecl"`
 	PassportID     string `passport:"pid"`
 	CountryID      string `passport:"cid"`
+}
+
+var validEyeColors = []interface{}{
+	"amb",
+	"blu",
+	"brn",
+	"gry",
+	"grn",
+	"hzl",
+	"oth",
 }
 
 func (p Passport) Validate() error {
@@ -33,8 +74,13 @@ func (p Passport) Validate() error {
 			validation.Min(2010), validation.Max(2020)),
 		validation.Field(&p.ExpirationYear, validation.Required,
 			validation.Min(2020), validation.Max(2030)),
-		validation.Field(&p.Height, validation.Required,
-			validation.Match(regexp.MustCompile("^[0-9]$"))),
+		validation.Field(&p.Height),
+		validation.Field(&p.HairColor, validation.Required,
+			validation.Match(regexp.MustCompile("^#[0-9a-f]{6}$"))),
+		validation.Field(&p.EyeColor, validation.Required,
+			validation.In(validEyeColors...)),
+		validation.Field(&p.PassportID, validation.Required,
+			validation.Match(regexp.MustCompile("^[0-9]{9}$"))),
 	)
 }
 
@@ -58,36 +104,49 @@ type DayFourInput struct {
 }
 
 type DayFourOutput struct {
-	NumValid int
+	NumValid        int
+	NumValidPartTwo int
 }
 
-func parseDayFourLine(p *Passport, line string) {
-	v := reflect.ValueOf(p).Elem()
-
+func parseDayFourLine(p *Passport, line string) error {
 	for _, field := range strings.Split(line, " ") {
 		keyValue := strings.Split(field, ":")
 		key := keyValue[0]
 		value := keyValue[1]
-		for i := 0; i < v.NumField(); i++ {
-			field := v.Field(i)
-			fieldType := v.Type().Field(i)
-			tag := fieldType.Tag.Get("passport")
-			if key == tag {
-				switch fieldType.Type.Kind() {
-				case reflect.Int:
-					num, err := strconv.Atoi(value)
-					if err != nil {
-						panic(fmt.Sprintf("cannot convert to number: %#v", err))
-					}
-					field.Set(reflect.ValueOf(num))
-				case reflect.String:
-					field.Set(reflect.ValueOf(value))
-				default:
-					panic(fmt.Sprintf("unexpected field type: %#v", fieldType))
-				}
+		switch key {
+		case "byr":
+			num, err := strconv.Atoi(value)
+			if err != nil {
+				return err
 			}
+			p.BirthYear = num
+		case "iyr":
+			num, err := strconv.Atoi(value)
+			if err != nil {
+				return err
+			}
+			p.IssueYear = num
+		case "eyr":
+			num, err := strconv.Atoi(value)
+			if err != nil {
+				return err
+			}
+			p.ExpirationYear = num
+		case "hgt":
+			p.Height = Height(value)
+		case "hcl":
+			p.HairColor = value
+		case "ecl":
+			p.EyeColor = value
+		case "pid":
+			p.PassportID = value
+		case "cid":
+			p.CountryID = value
+		default:
+			return fmt.Errorf("unexpected key: %s", key)
 		}
 	}
+	return nil
 }
 
 func parseDayFour(rawInput string) (*DayFourInput, error) {
@@ -122,8 +181,8 @@ func solveDayFour(in *DayFourInput) (*DayFourOutput, error) {
 		if p.IsValid() {
 			out.NumValid++
 		}
-		if err := p.Validate(); err != nil {
-			log.Printf("invalid: %s", err)
+		if err := p.Validate(); err == nil {
+			out.NumValidPartTwo++
 		}
 	}
 
