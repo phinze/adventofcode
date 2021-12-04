@@ -47,69 +47,90 @@ func parseDayThree(rawInput string) (*DayThreeInput, error) {
 	return in, nil
 }
 
+func isBitOn(num uint64, bitPlace int) bool {
+	mask := uint64(math.Pow(2, float64(bitPlace)))
+	return num&mask > 0
+}
+
+func numBitsInPosition(nums []uint64, bitPlace int) int {
+	total := 0
+	for _, n := range nums {
+		if isBitOn(n, bitPlace) {
+			total++
+		}
+	}
+	return total
+}
+
+func majorityBitInPosition(nums []uint64, bitPlace int) bool {
+	count := numBitsInPosition(nums, bitPlace)
+	other := len(nums) - count
+
+	return count >= other
+}
+
+func minorityBitInPosition(nums []uint64, bitPlace int) bool {
+	count := numBitsInPosition(nums, bitPlace)
+	other := len(nums) - count
+
+	return count < other
+}
+
+func dumpBits(nums []uint64) {
+	log.Printf("    [[")
+	for _, n := range nums {
+		log.Printf("     %012b", n)
+	}
+	log.Printf("    ]]")
+}
+
 func solveDayThree(in *DayThreeInput) (*DayThreeOutput, error) {
 	out := &DayThreeOutput{}
 
+	// part 1
 	bits := make([]int, in.BitLength)
-	for _, d := range in.Diagnostics {
-		log.Printf("checking: %012b", d)
-		for i := range bits {
-			pow := uint64(math.Pow(2, float64(i)))
-			mod := d & pow
-			log.Printf("d: %d, pow: %d, mod: %d", d, pow, mod)
-			log.Printf("  bit %d is...", i)
-			if mod > 0 {
-				log.Printf("on!")
-				bits[i]++
-			} else {
-				log.Printf("off.")
-			}
-		}
+	for i := range bits {
+		bits[i] = numBitsInPosition(in.Diagnostics, i)
 	}
-	log.Printf("%#v", bits)
 	for i, bitsSeen := range bits {
 		if bitsSeen > len(in.Diagnostics)/2 {
 			out.GammaRate += uint64(math.Pow(2, float64(i)))
 		}
 	}
-
-	log.Printf("gamma %b", out.GammaRate)
-	log.Printf("not gamma %b", (^out.GammaRate & (uint64(math.Pow(2, float64(in.BitLength))) - 1)))
 	out.EpsilonRate = ^out.GammaRate & (uint64(math.Pow(2, float64(in.BitLength))) - 1)
 	out.PartOneAnswer = int(out.GammaRate * out.EpsilonRate)
 
+	// part 2
 	candidateOxygenRatings := make([]uint64, len(in.Diagnostics))
 	candidateCO2Ratings := make([]uint64, len(in.Diagnostics))
 	copy(candidateOxygenRatings, in.Diagnostics)
 	copy(candidateCO2Ratings, in.Diagnostics)
 
-	for bitPlace := len(bits) - 1; bitPlace >= 0; bitPlace-- {
-		log.Printf("searching for ratings bit place: %d, freqency: %d...", bitPlace, bits[bitPlace])
-		oxygenBitValueToKeep := (bits[bitPlace] >= len(in.Diagnostics)/2)
-		co2BitValueToKeep := (bits[bitPlace] < len(in.Diagnostics)/2)
+	for bitPlace := in.BitLength - 1; bitPlace >= 0; bitPlace-- {
+		bitValueToKeep := majorityBitInPosition(candidateOxygenRatings, bitPlace)
 		for i := len(candidateOxygenRatings) - 1; i >= 0; i-- {
 			d := candidateOxygenRatings[i]
-			pow := uint64(math.Pow(2, float64(bitPlace)))
-			bitIsOn := (d & pow) > 0
-			if bitIsOn != oxygenBitValueToKeep {
+			bitValue := isBitOn(d, bitPlace)
+			if bitValue != bitValueToKeep {
 				candidateOxygenRatings = append(candidateOxygenRatings[:i], candidateOxygenRatings[i+1:]...)
 			}
 		}
+		if len(candidateOxygenRatings) == 1 && out.OxygenRating == 0 {
+			out.OxygenRating = candidateOxygenRatings[0]
+		}
+	}
+
+	for bitPlace := in.BitLength - 1; bitPlace >= 0; bitPlace-- {
+		bitValueToKeep := minorityBitInPosition(candidateCO2Ratings, bitPlace)
 		for i := len(candidateCO2Ratings) - 1; i >= 0; i-- {
 			d := candidateCO2Ratings[i]
-			pow := uint64(math.Pow(2, float64(bitPlace)))
-			bitIsOn := (d & pow) > 0
-			if bitIsOn != co2BitValueToKeep {
+			bitValue := isBitOn(d, bitPlace)
+			if bitValue != bitValueToKeep {
 				candidateCO2Ratings = append(candidateCO2Ratings[:i], candidateCO2Ratings[i+1:]...)
 			}
 		}
-		log.Printf("for bit %d, got %d oxygen ratings", bitPlace, len(candidateOxygenRatings))
-		log.Printf("for bit %d, got %d co2 ratings", bitPlace, len(candidateCO2Ratings))
 		if len(candidateCO2Ratings) == 1 && out.ScrubberRating == 0 {
 			out.ScrubberRating = candidateCO2Ratings[0]
-		}
-		if len(candidateOxygenRatings) == 1 && out.OxygenRating == 0 {
-			out.OxygenRating = candidateOxygenRatings[0]
 		}
 	}
 
