@@ -1,5 +1,7 @@
 github.com/asaskevich/govalidator v0.0.0-20200108200545-475eaeb16496 h1:zV3ejI06GQ59hwDQAvmK1qxOQGB3WuVTRoY0okPTAv0=
 github.com/asaskevich/govalidator v0.0.0-20200108200545-475eaeb16496/go.mod h1:oGkLhpf+kjZl6xBf758TQhh5XrAeiJv/7FRz/2spLIg=
+github.com/bxcodec/saint v0.0.0-20170414061423-b5b5ec0fff65 h1:mNcZMaafidzlDfCZsJvbEy5KoSpluc8aTYtIBXfBO8I=
+github.com/bxcodec/saint v0.0.0-20170414061423-b5b5ec0fff65/go.mod h1:SNNNxcv0sB0XyS5fhSYZXrJj+Od5D4ll9s8lddiMdSo=
 github.com/davecgh/go-spew v1.1.0 h1:ZDRjVQ15GmhC3fiQ8ni8+OwkZQO4DARzQgrnXU1Liz8=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/go-ozzo/ozzo-validation/v4 v4.3.0 h1:byhDUpfEwjsVQb1vBunvIjh2BHQ9ead57VkAEY4V+Es=
