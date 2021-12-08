@@ -3,7 +3,6 @@ package year2021
 import (
 	"bufio"
 	"fmt"
-	"log"
 	"math"
 	"strings"
 
@@ -81,17 +80,6 @@ func parseDayEight(rawInput string) (*DayEightInput, error) {
 }
 
 // num segments -> possible digits
-// lengths
-// 0: 6
-// 1: 2
-// 2: 5
-// 3: 5
-// 4: 4
-// 5: 5
-// 6: 6
-// 7: 3
-// 8: 7
-// 9: 6
 var lenToDigits map[int][]int = map[int][]int{
 	2: {1},
 	3: {7},
@@ -127,42 +115,32 @@ func solveDayEight(in *DayEightInput) (*DayEightOutput, error) {
 		}
 
 		for _, o := range n.Observations {
-			log.Printf("checking %s", o)
 			switch o.Len() {
 			case 2, 3, 4, 7:
 				// already got'em
-				log.Printf("unique")
 			case 5:
-				log.Printf("len 5")
 				if o.IntersectSize(knownDigits[4]) == 2 {
 					// 2 has length 5 and its intersection with 4 is 2 segments
 					// (intersection with 4 is length 3 for 3 and 5)
 					knownDigits[2] = o
-					log.Printf("got 2")
 				} else if o.IntersectSize(knownDigits[1]) == 2 {
 					// 3 has length 5 and its intersection with 1 is 2 segments
 					// (only 1 for 2 and 5)
 					knownDigits[3] = o
-					log.Printf("got 3")
 				} else {
 					// last len 5 digit is 5
 					knownDigits[5] = o
-					log.Printf("got 5")
 				}
 			case 6:
-				log.Printf("len 6")
 				if o.IntersectSize(knownDigits[4]) == 4 {
 					// 9 has 4 intersections with 4, 0 and 6 only have three
 					knownDigits[9] = o
-					log.Printf("got 9")
 				} else if o.IntersectSize(knownDigits[1]) == 2 {
 					// 0 has 2 intersections with 1, 6 only has 1
 					knownDigits[0] = o
-					log.Printf("got 0")
 				} else {
 					// last len 6 digit is 6
 					knownDigits[6] = o
-					log.Printf("got 6")
 				}
 
 			default:
@@ -178,7 +156,6 @@ func solveDayEight(in *DayEightInput) (*DayEightOutput, error) {
 			for digitValue, kd := range knownDigits {
 				if kd.IsEqual(d) {
 					found = true
-					log.Printf("found %d for %s", digitValue, d)
 					value += digitValue * int(math.Pow10(tensPlace))
 				}
 			}
@@ -189,16 +166,10 @@ func solveDayEight(in *DayEightInput) (*DayEightOutput, error) {
 		}
 
 		digitsTotal += value
-
-		log.Printf("knownDigits for this line: %v", knownDigits)
-		log.Printf("value for this line: %v", value)
 	}
 
 	out.PartOneAnswer = numUnique
 	out.PartTwoAnswer = digitsTotal
-
-	// intersect (8, 1) => right hand row, but uncler which of the two is
-	// sub (7, 1) => top row
 
 	return out, nil
 }
