@@ -14,6 +14,7 @@
         devShell = with pkgs; mkShell rec {
           name = "adventofcode";
           buildInputs = [
+            delve
             go
             gopls
           ];
