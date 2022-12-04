@@ -7,29 +7,26 @@ import (
 )
 
 type CleaningAssignment struct {
-	From int
-	To   int
+	Start int
+	End   int
 }
 
 func (ca *CleaningAssignment) FullyContains(other *CleaningAssignment) bool {
-	return ca.From <= other.From && ca.To >= other.To
+	return ca.Start <= other.Start && ca.End >= other.End
 }
 
-// ca.From...ca.To
-//
-//	other.From......other.To
 func (ca *CleaningAssignment) Overlaps(other *CleaningAssignment) bool {
-	return ca.To >= other.From && other.To >= ca.From
+	return ca.End >= other.Start && other.End >= ca.Start
 }
 
 func NewCleaningAssignment(ran string) *CleaningAssignment {
 	ca := &CleaningAssignment{}
 	parts := strings.Split(ran, "-")
 	var err error
-	if ca.From, err = strconv.Atoi(parts[0]); err != nil {
+	if ca.Start, err = strconv.Atoi(parts[0]); err != nil {
 		panic(err)
 	}
-	if ca.To, err = strconv.Atoi(parts[1]); err != nil {
+	if ca.End, err = strconv.Atoi(parts[1]); err != nil {
 		panic(err)
 	}
 	return ca
