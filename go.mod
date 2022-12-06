@@ -8,8 +8,9 @@ require (
 	github.com/go-ozzo/ozzo-validation/v4 v4.3.0
 	github.com/imroc/req/v3 v3.26.3
 	github.com/scylladb/go-set v1.0.2
-	github.com/stretchr/testify v1.7.0
+	github.com/stretchr/testify v1.8.0
 	golang.org/x/exp v0.0.0-20221204150635-6dcec336b2bb
+	tailscale.com v1.34.0
 )
 
 require (
@@ -24,6 +25,8 @@ require (
 	github.com/marten-seemann/qtls-go1-17 v0.1.2 // indirect
 	github.com/marten-seemann/qtls-go1-18 v0.1.2 // indirect
 	github.com/marten-seemann/qtls-go1-19 v0.1.0-beta.1 // indirect
+	github.com/mitchellh/copystructure v1.2.0 // indirect
+	github.com/mitchellh/reflectwalk v1.0.2 // indirect
 	github.com/nxadm/tail v1.4.8 // indirect
 	github.com/onsi/ginkgo v1.16.5 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
@@ -34,5 +37,5 @@ require (
 	golang.org/x/text v0.4.0 // indirect
 	golang.org/x/tools v0.2.0 // indirect
 	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect
-	gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
