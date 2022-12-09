@@ -16,6 +16,7 @@ require (
 require (
 	github.com/cheekybits/genny v1.0.0 // indirect
 	github.com/fsnotify/fsnotify v1.5.4 // indirect
+	github.com/gammban/numtow v0.0.2 // indirect
 	github.com/go-task/slim-sprig v0.0.0-20210107165309-348f09dbbbc0 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
