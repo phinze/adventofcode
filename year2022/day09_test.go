@@ -39,7 +39,7 @@ U 20
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
-	require.Equal(t, 13, out.VisitedPositions)
+	require.Equal(t, 36, out.BigRopeVisitedPositions)
 }
 
 func TestDayNine(t *testing.T) {

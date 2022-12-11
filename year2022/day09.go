@@ -3,7 +3,6 @@ package year2022
 import (
 	"bufio"
 	"fmt"
-	"log"
 	"strconv"
 	"strings"
 
@@ -23,32 +22,59 @@ type DayNineInput struct {
 	Moves []*RopeMove
 }
 
-type Coords struct {
+type Knot struct {
 	X, Y int
 }
 
-func (c *Coords) String() string {
+type Rope struct {
+	Knots []*Knot
+}
+
+func (c *Knot) String() string {
 	return fmt.Sprintf("(%d, %d)", c.X, c.Y)
 }
 
 type RopeField struct {
-	Head    *Coords
-	Tail    *Coords
+	Rope    []*Knot
 	History map[string]int
+	minX    int
+	minY    int
 	maxX    int
 	maxY    int
 }
 
+func NewRopeField(ropeLength int) *RopeField {
+	rf := &RopeField{}
+	rf.History = make(map[string]int)
+	rf.Rope = make([]*Knot, ropeLength)
+	for i := 0; i < ropeLength; i++ {
+		rf.Rope[i] = &Knot{}
+	}
+	return rf
+}
+
 func (rf *RopeField) String() string {
 	var b strings.Builder
-	for y := rf.maxY; y >= 0; y-- {
-		for x := 0; x <= rf.maxX; x++ {
-			if rf.Head.X == x && rf.Head.Y == y {
-				b.WriteString("H")
-			} else if rf.Tail.X == x && rf.Tail.Y == y {
-				b.WriteString("T")
-			} else {
-				b.WriteString(".")
+	for y := rf.maxY; y >= rf.minY; y-- {
+		for x := rf.minX; x <= rf.maxX; x++ {
+			ropeHere := false
+			for i, k := range rf.Rope {
+				if k.X == x && k.Y == y {
+					ropeHere = true
+					if i == 0 {
+						b.WriteString("H")
+					} else {
+						b.WriteString(fmt.Sprintf("%d", i))
+					}
+					break
+				}
+			}
+			if !ropeHere {
+				if x == 0 && y == 0 {
+					b.WriteString("s")
+				} else {
+					b.WriteString(".")
+				}
 			}
 		}
 		b.WriteString("\n")
@@ -57,71 +83,77 @@ func (rf *RopeField) String() string {
 }
 
 func (rf *RopeField) Execute(m *RopeMove) {
-	log.Printf("executing move: %s", m)
 	for i := 0; i < m.Steps; i++ {
 		switch m.Direction {
 		case "U":
-			rf.Head.Y += 1
+			rf.Rope[0].Y += 1
 		case "D":
-			rf.Head.Y -= 1
+			rf.Rope[0].Y -= 1
 		case "R":
-			rf.Head.X += 1
+			rf.Rope[0].X += 1
 		case "L":
-			rf.Head.X -= 1
+			rf.Rope[0].X -= 1
 		}
-		if rf.Head.X > rf.maxX {
-			rf.maxX = rf.Head.X
+		if rf.Rope[0].X > rf.maxX {
+			rf.maxX = rf.Rope[0].X
 		}
-		if rf.Head.Y > rf.maxY {
-			rf.maxY = rf.Head.Y
+		if rf.Rope[0].Y > rf.maxY {
+			rf.maxY = rf.Rope[0].Y
+		}
+		if rf.Rope[0].X < rf.minX {
+			rf.minX = rf.Rope[0].X
+		}
+		if rf.Rope[0].Y < rf.minY {
+			rf.minY = rf.Rope[0].Y
 		}
 		rf.UpdateTail()
-		fmt.Printf("%s\n", rf)
 	}
-	log.Printf("head now: %s", rf.Head)
-	log.Printf("tail now: %s", rf.Tail)
 }
 
 func (rf *RopeField) UpdateTail() {
-	// If the head is ever two steps directly up, down, left, or right from the
-	// tail, the tail must also move one step in that direction
-	deltaX := rf.Head.X - rf.Tail.X
-	deltaY := rf.Head.Y - rf.Tail.Y
-	fmt.Printf("dX: %d, dY: %d\n", deltaX, deltaY)
-	if deltaX == 0 {
-		if deltaY > 1 {
-			fmt.Println("--> moving up")
-			rf.Tail.Y += 1
-		} else if deltaY < -1 {
-			fmt.Println("--> moving down")
-			rf.Tail.Y -= 1
+	for i := 1; i < len(rf.Rope); i++ {
+		prev := rf.Rope[i-1]
+		this := rf.Rope[i]
+		// If the head is ever two steps directly up, down, left, or right from the
+		// tail, the tail must also move one step in that direction
+		deltaX := prev.X - this.X
+		deltaY := prev.Y - this.Y
+		if deltaX == 0 {
+			if deltaY > 1 {
+				// fmt.Println("--> moving up")
+				this.Y += 1
+			} else if deltaY < -1 {
+				// fmt.Println("--> moving down")
+				this.Y -= 1
+			}
+		} else if deltaY == 0 {
+			if deltaX > 1 {
+				// fmt.Println("--> moving right")
+				this.X += 1
+			} else if deltaX < -1 {
+				// fmt.Println("--> moving left")
+				this.X -= 1
+			}
+		} else if (deltaY > 1 && deltaX > 0) || (deltaX > 1 && deltaY > 0) {
+			// fmt.Println("--> moving up/right")
+			this.X += 1
+			this.Y += 1
+		} else if (deltaY < -1 && deltaX < 0) || (deltaX < -1 && deltaY < 0) {
+			// fmt.Println("--> moving down/left")
+			this.X -= 1
+			this.Y -= 1
+		} else if (deltaX < -1 && deltaY > 0) || (deltaY > 1 && deltaX < 0) {
+			// fmt.Println("--> moving up/left")
+			this.X -= 1
+			this.Y += 1
+		} else if (deltaX > 1 && deltaY < 0) || (deltaY < -1 && deltaX > 0) {
+			// fmt.Println("--> moving down/right")
+			this.X += 1
+			this.Y -= 1
 		}
-	} else if deltaY == 0 {
-		if deltaX > 1 {
-			fmt.Println("--> moving right")
-			rf.Tail.X += 1
-		} else if deltaX < -1 {
-			fmt.Println("--> moving left")
-			rf.Tail.X -= 1
-		}
-	} else if (deltaY > 1 && deltaX > 0) || (deltaX > 1 && deltaY > 0) {
-		fmt.Println("--> moving up/right")
-		rf.Tail.X += 1
-		rf.Tail.Y += 1
-	} else if (deltaY < -1 && deltaX < 0) || (deltaX < -1 && deltaY < 0) {
-		fmt.Println("--> moving down/left")
-		rf.Tail.X -= 1
-		rf.Tail.Y -= 1
-	} else if (deltaX < -1 && deltaY > 0) || (deltaY > 1 && deltaX < 0) {
-		fmt.Println("--> moving up/left")
-		rf.Tail.X -= 1
-		rf.Tail.Y += 1
-	} else if (deltaX > 1 && deltaY < 0) || (deltaY < -1 && deltaX > 0) {
-		fmt.Println("--> moving down/right")
-		rf.Tail.X += 1
-		rf.Tail.Y -= 1
 	}
-	rf.History[fmt.Sprintf("%d,%d", rf.Tail.X, rf.Tail.Y)] += 1
+	tail := rf.Rope[len(rf.Rope)-1]
+	rf.History[fmt.Sprintf("%d,%d", tail.X, tail.Y)] += 1
 }
 
 type DayNineOutput struct {
@@ -153,18 +185,18 @@ func solveDayNine(in *DayNineInput) (*DayNineOutput, error) {
 	out := &DayNineOutput{}
 
 	// part one
-	field := &RopeField{
-		Head:    &Coords{},
-		Tail:    &Coords{},
-		History: make(map[string]int),
-	}
+	field := NewRopeField(2)
 	for _, m := range in.Moves {
 		field.Execute(m)
-		log.Printf("board:\n%s", field)
 	}
 	out.VisitedPositions = len(field.History)
 
 	// part two
+	field = NewRopeField(10)
+	for _, m := range in.Moves {
+		field.Execute(m)
+	}
+	out.BigRopeVisitedPositions = len(field.History)
 
 	return out, nil
 }
