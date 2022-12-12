@@ -83,6 +83,7 @@ import (
 type Day{{ .DayWord }}Input struct {
 }
 type Day{{ .DayWord }}Output struct {
+	PartOneAnswer int
 }
 
 func parseDay{{ .DayWord }}(rawInput string) (*Day{{ .DayWord }}Input, error) {
@@ -134,7 +135,19 @@ import (
 
 	"github.com/davecgh/go-spew/spew"
 	"github.com/phinze/adventofcode/aoc"
+	"github.com/stretchr/testify/require"
 )
+
+func TestDay{{ .DayWord }}_simple(t *testing.T) {
+	in := ` + "`" + `
+` + "`" + `
+	out, err := Day{{ .DayWord }}(in)
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+	expected := 0
+	require.Equal(t, expected, out.PartOneAnswer)
+}
 
 func TestDay{{ .DayWord }}(t *testing.T) {
 	in, err := aoc.FetchInput({{ .Year }}, {{ .Day }})
