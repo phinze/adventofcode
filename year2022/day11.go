@@ -44,7 +44,7 @@ func (m *Monkey) Catch(s *MonkeyStuff) {
 	m.Stuff = append(m.Stuff, s)
 }
 
-func MonkeyPlaytime(monkeys []*Monkey, rounds int, worryDecay bool) *big.Int {
+func MonkeyPlaytime(monkeys []*Monkey, rounds int, decayFunc func(*big.Int)) *big.Int {
 	monkeys = must.Get(copystructure.Copy(monkeys)).([]*Monkey)
 	modTest := new(big.Int)
 	modRem := new(big.Int)
@@ -76,9 +76,7 @@ func MonkeyPlaytime(monkeys []*Monkey, rounds int, worryDecay bool) *big.Int {
 					}
 				}
 				// log.Printf("    after operation %s %s: %d", m.WorryOperator, m.WorryOperand, s.Worry)
-				if worryDecay {
-					s.Worry.Div(s.Worry, Three)
-				}
+				decayFunc(s.Worry)
 				// log.Printf("    after decay %d", s.Worry)
 				modTest.Set(s.Worry)
 				modTest.QuoRem(modTest, m.TestDivBy, modRem)
@@ -161,11 +159,22 @@ func solveDayEleven(in *DayElevenInput) (*DayElevenOutput, error) {
 		}
 
 	// part one
-	out.MonkeyBusiness = MonkeyPlaytime(in.Monkeys, 20, true)
+	three := big.NewInt(3)
+	divByThree := func(i *big.Int) {
+		i.Div(i, three)
+	}
+	out.MonkeyBusiness = MonkeyPlaytime(in.Monkeys, 20, divByThree)
 
 	// part two
-	out.WorryFreeMonkeyBiz = MonkeyPlaytime(in.Monkeys, 900, false)
-	// out.WorryFreeMonkeyBiz = MonkeyPlaytime(in.Monkeys, 10000, false)
+	// Decay by a number that will maintain modulo checks for all monkeys
+	commonMultiple := big.NewInt(1)
+	for _, m := range in.Monkeys {
+		commonMultiple.Mul(commonMultiple, m.TestDivBy)
+	}
+	reduceByMultiple := func(i *big.Int) {
+		i.Mod(i, commonMultiple)
+	}
+	out.WorryFreeMonkeyBiz = MonkeyPlaytime(in.Monkeys, 10000, reduceByMultiple)
 
 	return out, nil
 }
