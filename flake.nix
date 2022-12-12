@@ -15,6 +15,7 @@
           name = "adventofcode";
           buildInputs = [
             delve
+            graphviz
             go
             gopls
           ];

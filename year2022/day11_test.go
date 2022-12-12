@@ -1,6 +1,7 @@
 package year2022
 
 import (
+	"math/big"
 	"testing"
 
 	"github.com/davecgh/go-spew/spew"
@@ -41,7 +42,9 @@ Monkey 3:
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
-	require.Equal(t, 10605, out.MonkeyBusiness)
+	require.Equal(t, big.NewInt(10605), out.MonkeyBusiness)
+	worryFreeBiz, _ := new(big.Int).SetString("2713310158", 10)
+	require.Equal(t, worryFreeBiz, out.WorryFreeMonkeyBiz)
 }
 
 func TestDayEleven(t *testing.T) {
