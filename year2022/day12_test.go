@@ -19,8 +19,8 @@ abdefghi
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
-	expected := 31
-	require.Equal(t, expected, out.PartOneAnswer)
+	require.Equal(t, 31, out.PartOneAnswer)
+	require.Equal(t, 29, out.PartTwoAnswer)
 }
 
 func TestDayTwelve(t *testing.T) {

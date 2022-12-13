@@ -4,14 +4,15 @@ import (
 	"bufio"
 	"fmt"
 	"log"
+	"math"
 	"strings"
 
-	"github.com/dominikbraun/graph"
-	"tailscale.com/util/must"
+	"github.com/yourbasic/graph"
 )
 
 type MapPoint struct {
 	X, Y      int
+	Index     int
 	Elevation rune
 
 	pathTaken rune
@@ -22,7 +23,7 @@ func (mp *MapPoint) Height() int {
 	case 'S':
 		return 0
 	case 'E':
-		return 26
+		return 25
 	default:
 		return int(mp.Elevation - 'a')
 	}
@@ -70,6 +71,14 @@ func (m *HeightMap) Height() int {
 	return len(m.Grid)
 }
 
+func (m *HeightMap) IndexOf(mp *MapPoint) int {
+	return mp.Y*m.Width() + mp.X
+}
+
+func (m *HeightMap) Lookup(i int) *MapPoint {
+	return m.Grid[i/m.Width()][i%m.Width()]
+}
+
 func (m *HeightMap) Neighbors(x, y int) []*MapPoint {
 	n := make([]*MapPoint, 0, 4)
 	if x-1 >= 0 {
@@ -106,6 +115,7 @@ type DayTwelveInput struct {
 
 type DayTwelveOutput struct {
 	PartOneAnswer int
+	PartTwoAnswer int
 }
 
 func parsePoint(x, y int, c rune) *MapPoint {
@@ -114,10 +124,6 @@ func parsePoint(x, y int, c rune) *MapPoint {
 		Y:         y,
 		Elevation: c,
 	}
-}
-
-func pointHash(p *MapPoint) string {
-	return fmt.Sprintf("%d,%d", p.X, p.Y)
 }
 
 func parseDayTwelve(rawInput string) (*DayTwelveInput, error) {
@@ -139,7 +145,6 @@ func parseDayTwelve(rawInput string) (*DayTwelveInput, error) {
 			row = append(row, p)
 		}
 		in.Map.Grid = append(in.Map.Grid, row)
-		log.Printf("line: %s", line)
 		y++
 	}
 
@@ -154,14 +159,7 @@ func solveDayTwelve(in *DayTwelveInput) (*DayTwelveOutput, error) {
 	out := &DayTwelveOutput{}
 
 	// part one
-	g := graph.New(pointHash, graph.Directed())
-
-	// Make points
-	for _, row := range in.Map.Grid {
-		for _, point := range row {
-			g.AddVertex(point)
-		}
-	}
+	g := graph.New(in.Map.Width() * in.Map.Height())
 
 	// Draw traversible edges
 	for y, row := range in.Map.Grid {
@@ -172,34 +170,43 @@ func solveDayTwelve(in *DayTwelveInput) (*DayTwelveOutput, error) {
 				// log.Printf("    considering %d,%d", n.X, n.Y)
 				if n.Height()-point.Height() <= 1 {
 					// log.Printf("  %s -> %s", point, n)
-					g.AddEdge(pointHash(point), pointHash(n))
+					g.AddCost(in.Map.IndexOf(point), in.Map.IndexOf(n), 1)
 				}
 			}
 		}
 	}
 
 	// Find path
-	path, err := graph.ShortestPath(g, pointHash(in.Map.Start), pointHash(in.Map.End))
-	if err != nil {
-		return nil, err
-	}
+	path, pathLength := graph.ShortestPath(g, in.Map.IndexOf(in.Map.Start), in.Map.IndexOf(in.Map.End))
 
-	for i := 0; i < len(path)-1; i++ {
-		this := must.Get(g.Vertex(path[i]))
-		next := must.Get(g.Vertex(path[i+1]))
-		this.PathTakenTo(next)
-	}
-	log.Printf("path:\n%s", in.Map)
+	log.Printf("path: %#v, length: %d", path, pathLength)
 
 	// Draw path
+	// for i := 0; i < len(path)-1; i++ {
+	// 	this := in.Map.Lookup(path[i])
+	// 	next := in.Map.Lookup(path[i+1])
+	// 	this.PathTakenTo(next)
+	// }
+	// log.Printf("path:\n%s", in.Map)
 
-	log.Printf("path: %s", path)
-
-	out.PartOneAnswer = len(path) - 1
+	out.PartOneAnswer = int(pathLength)
 
 	// Calculate shortest path
 
 	// part two
+
+	shortestPathLength := int64(math.MaxInt64)
+	for _, row := range in.Map.Grid {
+		for _, point := range row {
+			if point.Height() == 0 {
+				_, pathLength := graph.ShortestPath(g, in.Map.IndexOf(point), in.Map.IndexOf(in.Map.End))
+				if pathLength > -1 && pathLength < shortestPathLength {
+					shortestPathLength = pathLength
+				}
+			}
+		}
+	}
+	out.PartTwoAnswer = int(shortestPathLength)
 
 	return out, nil
 }
