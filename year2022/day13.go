@@ -21,51 +21,55 @@ type DayThirteenOutput struct {
 
 // first return is answer, second return is done
 func inOrder(left, right PacketItem) (bool, bool) {
+	log.Printf("  [inOrder] left : %s", left)
+	log.Printf("  [inOrder] right: %s", right)
 	switch l := left.(type) {
 	case int:
 		switch r := right.(type) {
 		case int:
-			log.Printf("   comparing %d <= %d", l, r)
+			log.Printf("    checking ints %d <= %d", l, r)
 			if l < r {
-				log.Printf("   left less than right, in order!")
+				log.Printf("     left less than right, in order!")
 				return true, true
 			} else if l > r {
-				log.Printf("   left greater than right, not in order!")
+				log.Printf("     left greater than right, not in order!")
 				return false, true
 			} else {
-				log.Printf("   left equal to right, keep checking...")
+				log.Printf("     left equal to right, keep checking...")
 				return true, false
 			}
 		case *PacketList:
-			log.Printf("   mixed types; with list wrapper for %d and %#v", l, r.Items)
+			log.Printf("    mixed types; with list wrapper for %d and %#v", l, r.Items)
 			return inOrder(NewPacketList(l), r)
 		}
 	case *PacketList:
 		switch r := right.(type) {
 		case int:
-			log.Printf("   mixed types; with %#v and list wrapper for %d", l.Items, r)
+			log.Printf("    mixed types; with %#v and list wrapper for %d", l.Items, r)
 			return inOrder(l, NewPacketList(r))
 		case *PacketList:
 			ln := len(l.Items)
 			rn := len(r.Items)
 			if ln == 0 && rn == 0 {
-				log.Printf("   two empty lists, keep checking")
+				log.Printf("    two empty lists, keep checking")
 				// if left is empty list, it's definitely less than right
 				return true, false
 			} else if ln == 0 && rn > 0 {
-				log.Printf("   left ran out before right, so in order!")
+				log.Printf("    left ran out before right, so in order!")
 				return true, true
 			} else if ln > 0 && rn == 0 {
-				log.Printf("   right ran out before left, not in order!")
+				log.Printf("    right ran out before left, not in order!")
 				return false, true
 			} else if ln > 0 && rn > 0 {
 				// both lists have items, compare first elements and recurse
 				newL := NewPacketList(l.Items[1:]...)
 				newR := NewPacketList(r.Items[1:]...)
+				log.Printf("    have two lists, comparing first element")
 				firstComparison, done := inOrder(l.Items[0], r.Items[0])
 				if done {
 					return firstComparison, done
 				}
+				log.Printf("first element not conclusive, comparing rest")
 				return inOrder(newL, newR)
 			}
 		}
@@ -167,13 +171,13 @@ func solveDayThirteen(in *DayThirteenInput) (*DayThirteenOutput, error) {
 	out := &DayThirteenOutput{}
 
 	// part one
+	pairIndex := 1
 	for i := 0; i < len(in.Packets)-1; i += 2 {
-		pairIndex := i/2 + 1
 		this := in.Packets[i]
 		next := in.Packets[i+1]
 
 		log.Printf("checking pair %d (%d and %d)", pairIndex, i, i+1)
-		log.Printf("  left: %s", spew.Sdump(this))
+		log.Printf("  left : %s", spew.Sdump(this))
 		log.Printf("  right: %s", spew.Sdump(next))
 
 		if InOrder(this.Data, next.Data) {
@@ -182,6 +186,7 @@ func solveDayThirteen(in *DayThirteenInput) (*DayThirteenOutput, error) {
 		} else {
 			log.Printf("  not in order!")
 		}
+		pairIndex++
 	}
 
 	// part two
