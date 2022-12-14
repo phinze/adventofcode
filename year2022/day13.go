@@ -39,13 +39,13 @@ func inOrder(left, right PacketItem) (bool, bool) {
 				return true, false
 			}
 		case *PacketList:
-			log.Printf("    mixed types; with list wrapper for %d and %#v", l, r.Items)
+			log.Printf("    mixed types; left is %d and right is %s, wrapping left in list", l, r.Items)
 			return inOrder(NewPacketList(l), r)
 		}
 	case *PacketList:
 		switch r := right.(type) {
 		case int:
-			log.Printf("    mixed types; with %#v and list wrapper for %d", l.Items, r)
+			log.Printf("    mixed types; left is %s and right is %d, wrapping right in list", l.Items, r)
 			return inOrder(l, NewPacketList(r))
 		case *PacketList:
 			ln := len(l.Items)
