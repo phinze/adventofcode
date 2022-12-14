@@ -179,15 +179,13 @@ func solveDayTwelve(in *DayTwelveInput) (*DayTwelveOutput, error) {
 	// Find path
 	path, pathLength := graph.ShortestPath(g, in.Map.IndexOf(in.Map.Start), in.Map.IndexOf(in.Map.End))
 
-	log.Printf("path: %#v, length: %d", path, pathLength)
-
 	// Draw path
-	// for i := 0; i < len(path)-1; i++ {
-	// 	this := in.Map.Lookup(path[i])
-	// 	next := in.Map.Lookup(path[i+1])
-	// 	this.PathTakenTo(next)
-	// }
-	// log.Printf("path:\n%s", in.Map)
+	for i := 0; i < len(path)-1; i++ {
+		this := in.Map.Lookup(path[i])
+		next := in.Map.Lookup(path[i+1])
+		this.PathTakenTo(next)
+	}
+	log.Printf("path:\n%s", in.Map)
 
 	out.PartOneAnswer = int(pathLength)
 
