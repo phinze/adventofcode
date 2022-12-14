@@ -15,8 +15,9 @@ type DayThirteenInput struct {
 	Packets []*Packet
 }
 type DayThirteenOutput struct {
-	PartOneAnswer int
-	PartTwoAnswer int
+	PartOneAnswer      int
+	PartOneComparisons []bool
+	PartTwoAnswer      int
 }
 
 // first return is answer, second return is done
@@ -52,7 +53,6 @@ func inOrder(left, right PacketItem) (bool, bool) {
 			rn := len(r.Items)
 			if ln == 0 && rn == 0 {
 				log.Printf("    two empty lists, keep checking")
-				// if left is empty list, it's definitely less than right
 				return true, false
 			} else if ln == 0 && rn > 0 {
 				log.Printf("    left ran out before right, so in order!")
@@ -64,7 +64,7 @@ func inOrder(left, right PacketItem) (bool, bool) {
 				// both lists have items, compare first elements and recurse
 				newL := NewPacketList(l.Items[1:]...)
 				newR := NewPacketList(r.Items[1:]...)
-				log.Printf("    have two lists, comparing first element")
+				log.Printf("    have two nonempty lists, comparing first element")
 				firstComparison, done := inOrder(l.Items[0], r.Items[0])
 				if done {
 					return firstComparison, done
@@ -78,7 +78,10 @@ func inOrder(left, right PacketItem) (bool, bool) {
 }
 
 func InOrder(left, right PacketItem) bool {
-	answer, _ := inOrder(left, right)
+	answer, done := inOrder(left, right)
+	if !done {
+		panic("not done how")
+	}
 	return answer
 }
 
@@ -180,7 +183,9 @@ func solveDayThirteen(in *DayThirteenInput) (*DayThirteenOutput, error) {
 		log.Printf("  left : %s", spew.Sdump(this))
 		log.Printf("  right: %s", spew.Sdump(next))
 
-		if InOrder(this.Data, next.Data) {
+		result := InOrder(this.Data, next.Data)
+		out.PartOneComparisons = append(out.PartOneComparisons, result)
+		if result {
 			out.PartOneAnswer += pairIndex
 			log.Printf("  in order!")
 		} else {
