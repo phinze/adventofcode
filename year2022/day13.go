@@ -139,8 +139,8 @@ func parseDayThirteen(rawInput string) (*DayThirteenInput, error) {
 			OrigLine: line,
 		}
 		var cur *PacketList
-		for _, c := range line {
-			switch c {
+		for i := 0; i < len(line); {
+			switch line[i] {
 			case '[':
 				newList := &PacketList{Parent: cur}
 				if cur == nil {
@@ -149,12 +149,22 @@ func parseDayThirteen(rawInput string) (*DayThirteenInput, error) {
 					cur.Items = append(cur.Items, newList)
 				}
 				cur = newList
+				i++
 			case ']':
 				cur = cur.Parent
+				i++
 			case ',':
 				// we don't care about commas
+				i++
 			default:
-				num := must.Get(strconv.Atoi(string(c)))
+				// we have a number, it might be more than one char so we need
+				// to lookahead until there's a non-digit
+				numStr := ""
+				for line[i] >= '0' && line[i] <= '9' {
+					numStr = numStr + string(line[i])
+					i++
+				}
+				num := must.Get(strconv.Atoi(numStr))
 				cur.Items = append(cur.Items, num)
 			}
 		}
@@ -181,7 +191,9 @@ func solveDayThirteen(in *DayThirteenInput) (*DayThirteenOutput, error) {
 
 		log.Printf("checking pair %d (%d and %d)", pairIndex, i, i+1)
 		log.Printf("  left : %s", spew.Sdump(this))
+		log.Printf("  origL: %s", this.OrigLine)
 		log.Printf("  right: %s", spew.Sdump(next))
+		log.Printf("  origR: %s", next.OrigLine)
 
 		result := InOrder(this.Data, next.Data)
 		out.PartOneComparisons = append(out.PartOneComparisons, result)

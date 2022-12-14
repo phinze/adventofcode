@@ -57,7 +57,7 @@ func TestDayThirteen(t *testing.T) {
 			log.Printf("pair %d mismatch", i+1)
 		}
 	}
-	// t.Logf("out: %s", spew.Sdump(out))
+	t.Logf("part one: %d", out.PartOneAnswer)
 }
 
 var dayThirteenComparisonOracle = []bool{
