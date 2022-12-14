@@ -58,6 +58,7 @@ func TestDayThirteen(t *testing.T) {
 		}
 	}
 	t.Logf("part one: %d", out.PartOneAnswer)
+	t.Logf("part two: %d", out.PartTwoAnswer)
 }
 
 var dayThirteenComparisonOracle = []bool{

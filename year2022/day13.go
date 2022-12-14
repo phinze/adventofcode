@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"log"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -121,6 +122,44 @@ type Packet struct {
 	OrigLine string
 }
 
+func ParsePacket(line string) *Packet {
+	packet := &Packet{
+		Data:     &PacketList{},
+		OrigLine: line,
+	}
+	var cur *PacketList
+	for i := 0; i < len(line); {
+		switch line[i] {
+		case '[':
+			newList := &PacketList{Parent: cur}
+			if cur == nil {
+				packet.Data = newList
+			} else {
+				cur.Items = append(cur.Items, newList)
+			}
+			cur = newList
+			i++
+		case ']':
+			cur = cur.Parent
+			i++
+		case ',':
+			// we don't care about commas
+			i++
+		default:
+			// we have a number, it might be more than one char so we need
+			// to continue until there's a non-digit
+			numStr := ""
+			for line[i] >= '0' && line[i] <= '9' {
+				numStr = numStr + string(line[i])
+				i++
+			}
+			num := must.Get(strconv.Atoi(numStr))
+			cur.Items = append(cur.Items, num)
+		}
+	}
+	return packet
+}
+
 func (p *Packet) String() string {
 	return p.Data.String()
 }
@@ -134,42 +173,7 @@ func parseDayThirteen(rawInput string) (*DayThirteenInput, error) {
 		if line == "" {
 			continue
 		}
-		packet := &Packet{
-			Data:     &PacketList{},
-			OrigLine: line,
-		}
-		var cur *PacketList
-		for i := 0; i < len(line); {
-			switch line[i] {
-			case '[':
-				newList := &PacketList{Parent: cur}
-				if cur == nil {
-					packet.Data = newList
-				} else {
-					cur.Items = append(cur.Items, newList)
-				}
-				cur = newList
-				i++
-			case ']':
-				cur = cur.Parent
-				i++
-			case ',':
-				// we don't care about commas
-				i++
-			default:
-				// we have a number, it might be more than one char so we need
-				// to lookahead until there's a non-digit
-				numStr := ""
-				for line[i] >= '0' && line[i] <= '9' {
-					numStr = numStr + string(line[i])
-					i++
-				}
-				num := must.Get(strconv.Atoi(numStr))
-				cur.Items = append(cur.Items, num)
-			}
-		}
-		log.Printf("packet: %s", packet)
-		in.Packets = append(in.Packets, packet)
+		in.Packets = append(in.Packets, ParsePacket(line))
 	}
 	log.Printf("got %d packets", len(in.Packets))
 
@@ -207,6 +211,21 @@ func solveDayThirteen(in *DayThirteenInput) (*DayThirteenOutput, error) {
 	}
 
 	// part two
+	in.Packets = append(in.Packets, ParsePacket("[[2]]"), ParsePacket("[[6]]"))
+
+	sort.Slice(in.Packets, func(i, j int) bool {
+		return InOrder(in.Packets[i].Data, in.Packets[j].Data)
+	})
+
+	out.PartTwoAnswer = 1
+	for i := 0; i < len(in.Packets); i++ {
+		p := in.Packets[i].Data.String()
+		// log.Printf("packet %d - %s", i+1, p)
+		if p == "[[6]]" || p == "[[2]]" {
+			log.Printf("divider at index %d", i+1)
+			out.PartTwoAnswer *= i + 1
+		}
+	}
 
 	return out, nil
 }
